@@ -33,7 +33,7 @@ def conectar_google():
         creds = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
         client = gspread.authorize(creds)
         # Verificamos nombres exactos de Hoja y Pestaña
-        sheet = client.open("MANGO").worksheet("Sacadaas")
+        sheet = client.open("mango").worksheet("datos")
         print("✅ Conexión exitosa a Google Sheets")
     except Exception as e:
         print(f"❌ Error de conexión: {e}")
