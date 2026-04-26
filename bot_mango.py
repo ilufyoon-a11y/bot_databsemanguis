@@ -3,7 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, ConversationHandler
 
-# --- 1. CONFIGURACIÓN DE GOOGLE SHEETS ---
+# --- 1. CONFIGURACIÃ“N DE GOOGLE SHEETS ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
 client = gspread.authorize(creds)
@@ -13,58 +13,58 @@ try:
 except Exception as e:
     print(f"Error al abrir la hoja: {e}")
 
-# --- 2. ESTADOS DE LA CONVERSACIÓN ---
-# Añadimos todos los pasos nuevos aquí
+# --- 2. ESTADOS DE LA CONVERSACIÃ“N ---
+# AÃ±adimos todos los pasos nuevos aquÃ­
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
 # --- 3. FUNCIONES DEL BOT ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("?? Iniciando registro... ¿Cuál es el **CORREO**?", parse_mode='Markdown')
+    await update.message.reply_text("?? Iniciando registro... Â¿CuÃ¡l es el **CORREO**?", parse_mode='Markdown')
     return CORREO
 
 async def p_clave(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['correo'] = update.message.text
-    await update.message.reply_text("¿Cuál es la **CONTRASEÑA**?")
+    await update.message.reply_text("Â¿CuÃ¡l es la **CONTRASEÃ‘A**?")
     return CLAVE
 
 async def p_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['clave'] = update.message.text
-    await update.message.reply_text("¿Qué **IP** tiene?")
+    await update.message.reply_text("Â¿QuÃ© **IP** tiene?")
     return IP
 
 async def p_priv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['ip'] = update.message.text
-    await update.message.reply_text("¿De qué **PRIV** salió?")
+    await update.message.reply_text("Â¿De quÃ© **PRIV** saliÃ³?")
     return PRIV
 
 async def p_plataforma(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['priv'] = update.message.text
-    await update.message.reply_text("Qué **PLATAFORMA** es:")
+    await update.message.reply_text("QuÃ© **PLATAFORMA** es:")
     return PLATAFORMA
 
 async def p_pestado(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['plataforma'] = update.message.text
-    await update.message.reply_text("¿En qué **ESTADO** se encuentra?")
+    await update.message.reply_text("Â¿En quÃ© **ESTADO** se encuentra?")
     return ESTADO
 
 async def p_bin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['estado'] = update.message.text
-    await update.message.reply_text("¿Con qué **BIN** fue?")
+    await update.message.reply_text("Â¿Con quÃ© **BIN** fue?")
     return BIN
 
 async def p_tarjeta(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['bin'] = update.message.text
-    await update.message.reply_text("¿Con qué **TARJETA** fue?")
+    await update.message.reply_text("Â¿Con quÃ© **TARJETA** fue?")
     return TARJETA
 
 async def p_fecha_ven(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['tarjeta'] = update.message.text
-    await update.message.reply_text("¿Cuál es su **FECHA DE VENC**?")
+    await update.message.reply_text("Â¿CuÃ¡l es su **FECHA DE VENC**?")
     return FECHA_VEN
 
 async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Último dato recibido
+    # Ãšltimo dato recibido
     fecha_venc = update.message.text
     
     # Recuperamos todo lo guardado en memoria
@@ -94,14 +94,14 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"?? `User:` {context.user_data['correo']}\n"
         f"?? `BIN:` {context.user_data['bin']}\n"
         f"?? `Venc:` {fecha_venc}\n\n"
-        "*Operación finalizada con éxito.*",
+        "*OperaciÃ³n finalizada con Ã©xito.*",
         parse_mode='Markdown',
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Simulación cancelada. Borahae! ??", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text("SimulaciÃ³n cancelada. Borahae! ??", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
 if __name__ == '__main__':
