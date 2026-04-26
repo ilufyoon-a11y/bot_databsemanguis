@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from flask import Flask
 from threading import Thread
 
-# --- 1. DESPERTADOR PARA RENDER ---
+# --- 1. DESPERTADOR PARA RENDER (FLASK) ---
 app_web = Flask('')
 @app_web.route('/')
 def home(): return "🥭 Sistema MANGO - Activo"
@@ -37,9 +37,9 @@ def conectar_google():
         creds = ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
         client = gspread.authorize(creds)
         sheet = client.open("mango").worksheet("datos")
-        print("✅ CONECTADO 💜")
+        print("✅ CONECTADO A GOOGLE SHEETS 💜")
     except Exception as e:
-        print(f"🚨 ERROR: {e}")
+        print(f"🚨 ERROR DE CONEXIÓN: {e}")
         sheet = None
 
 # --- 3. ALERTA DE VENCIMIENTOS ---
@@ -53,12 +53,13 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
         proximos = []
 
         for reg in registros:
-            # Importante: Que el nombre de la columna en tu Excel sea exactamente "FECHA DE VENC"
+            # Busca la columna "FECHA DE VENC"
             fecha_str = str(reg.get('FECHA DE VENC', ''))
             try:
                 fecha_v = datetime.datetime.strptime(fecha_str, "%d/%m/%Y").date()
                 dias_restantes = (fecha_v - hoy).days
                 
+                # Alerta si vence hoy o mañana
                 if 0 <= dias_restantes <= 1: 
                     proximos.append(f"⚠️ {reg.get('PLATAFORMA')} ({reg.get('CORREO')}) vence en {dias_restantes} día(s).")
             except:
@@ -68,19 +69,19 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
             mensaje = "📢 **ALERTAS MANGO** 🥭\n\n" + "\n".join(proximos)
             await context.bot.send_message(chat_id=context.job.chat_id, text=mensaje, parse_mode='Markdown')
     except Exception as e:
-        print(f"Error en alertas: {e}")
+        print(f"Error en el sistema de alertas: {e}")
 
-# --- 4. LÓGICA DEL BOT ---
+# --- 4. LÓGICA DEL BOT (PASOS) ---
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Activa la revisión diaria de vencimientos (Corre a las 10:00 AM)
+    # Programar alertas diarias a las 10:00 AM
     chat_id = update.effective_chat.id
     jobs = context.job_queue.get_jobs_by_name(f"alerta_{chat_id}")
     if not jobs:
         context.job_queue.run_daily(revisar_vencimientos, time=datetime.time(hour=10, minute=0), chat_id=chat_id, name=f"alerta_{chat_id}")
 
-    # --- TU MENSAJE RESTAURADO ---
+    # Tu mensaje de bienvenida personalizado
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
     await update.message.reply_animation(
         animation=gif_url, 
@@ -129,7 +130,7 @@ async def p_tarjeta(u, c):
 
 async def p_fecha_ven(u, c):
     c.user_data['tarjeta'] = u.message.text
-    await u.message.reply_text("📅 **Paso 9:** ¿Cuál es su **FECHA DE VENC**?\n*(Ejemplo: 14/02/2007)*", parse_mode='Markdown')
+    await u.message.reply_text("📅 **Paso 9:** ¿Cuál es su **FECHA DE VENC**?\n*(Usa formato DD/MM/AAAA)*", parse_mode='Markdown')
     return FECHA_VEN
 
 async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -137,36 +138,54 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if sheet is None: conectar_google()
     
     try:
-        col_b = sheet.col_values(2) 
+        col_b = sheet.col_values(2) # Columna de correos
+        
+        # --- BUSCADOR DE FILA (Desde la 4) ---
         siguiente_fila = 4
         for i, valor in enumerate(col_b):
-            if i >= 10 and not valor.strip(): 
+            # i=3 es la fila 4. Si está vacío, nos quedamos con esa fila.
+            if i >= 3 and not str(valor).strip(): 
                 siguiente_fila = i + 1
                 break
+        else:
             siguiente_fila = len(col_b) + 1
         
         if siguiente_fila < 4: siguiente_fila = 4
 
+        # Preparamos los datos en el orden de tus columnas (B a J)
         datos = [
-            context.user_data['correo'], context.user_data['clave'],
-            context.user_data['ip'], context.user_data['priv'],
-            context.user_data['plataforma'], context.user_data['estado'],
-            context.user_data['bin'], context.user_data['tarjeta'],
-            update.message.text
+            context.user_data['correo'], 
+            context.user_data['clave'],
+            context.user_data['ip'], 
+            context.user_data['priv'],
+            context.user_data['plataforma'], 
+            context.user_data['estado'],
+            context.user_data['bin'], 
+            context.user_data['tarjeta'],
+            update.message.text # La fecha de vencimiento
         ]
 
+        # Guardar en la hoja
         sheet.update(range_name=f"B{siguiente_fila}:J{siguiente_fila}", values=[datos])
-        await update.message.reply_text("✅ **¡REGISTRO EXITOSO EN TU TABLA!** 🥭💜", reply_markup=ReplyKeyboardRemove())
+        
+        await update.message.reply_text(
+            f"✅ **¡REGISTRO EXITOSO!** 🥭💜\nGuardado en la fila: {siguiente_fila}",
+            reply_markup=ReplyKeyboardRemove(),
+            parse_mode='Markdown'
+        )
     except Exception as e:
-        await update.message.reply_text(f"❌ Error al guardar: {e}")
+        await update.message.reply_text(f"❌ Error al guardar en Sheets: {e}")
+        
     return ConversationHandler.END
 
-# --- 5. INICIO ---
+# --- 5. EJECUCIÓN PRINCIPAL ---
 if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN_TELEGRAM")
     if TOKEN:
         conectar_google()
         keep_alive()
+        
+        # Build de la aplicación con JobQueue activado
         app = ApplicationBuilder().token(TOKEN).build()
         
         conv_handler = ConversationHandler(
@@ -184,8 +203,9 @@ if __name__ == '__main__':
             },
             fallbacks=[CommandHandler("cancelar", lambda u,c: ConversationHandler.END)],
         )
+
         app.add_handler(CommandHandler("start", start_command))
         app.add_handler(conv_handler)
         
-        print("✅ Sistema MANGO Funcionando...")
+        print("🥭 Sistema MANGO en línea y buscando desde la fila 4...")
         app.run_polling()
