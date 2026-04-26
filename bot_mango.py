@@ -39,7 +39,7 @@ CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 # Comando /start: Bienvenida con GIF
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Puedes cambiar esta URL por cualquier GIF de BTS que te guste
-    gif_url = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueGZ3bmZ3bmZ3bmZ3bmZ3bmZ3bmZ3bmZ3bmZ3JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/S6S7Gvg90Gz3i/giphy.gif"
+    gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
     
     await update.message.reply_animation(
         animation=gif_url,
