@@ -105,7 +105,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 if __name__ == '__main__':
-    TOKEN = "TU_TOKEN_DE_TELEGRAM_AQUI"
+    TOKEN = os.getenv("TOKEN_TELEGRAM")
     app = ApplicationBuilder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
