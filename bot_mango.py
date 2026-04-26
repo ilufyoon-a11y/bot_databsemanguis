@@ -14,7 +14,6 @@ def home():
     return "🥭 Sistema MANGO - Proceso Activo"
 
 def run_web():
-    # Render asigna el puerto automáticamente
     port = int(os.environ.get('PORT', 8080))
     app_web.run(host='0.0.0.0', port=port)
 
@@ -30,20 +29,21 @@ def conectar_google():
     global sheet
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     try:
-        # El archivo debe subirse a GitHub con este nombre exacto
+        # El archivo DEBE llamarse credenciales.json en tu GitHub
         creds = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
         client = gspread.authorize(creds)
+        # Verificamos nombres exactos de Hoja y Pestaña
         sheet = client.open("MANGO").worksheet("Sacadaas")
-        print("✅ Conectado a Google Sheets")
+        print("✅ Conexión exitosa a Google Sheets")
     except Exception as e:
         print(f"❌ Error de conexión: {e}")
+        sheet = None  # Aseguramos que sea None si falla
 
 # --- 3. DEFINICIÓN DE PASOS (9 PASOS TOTALES) ---
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
 # --- 4. LÓGICA DEL BOT ---
 
-# Mensaje de bienvenida personalizado con tu GIF
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
     await update.message.reply_animation(
@@ -100,19 +100,20 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global sheet
     fecha_venc = update.message.text
     
-    # Verificación de seguridad para la hoja
-    if sheet is None: conectar_google()
+    # RE-CONEXIÓN DE EMERGENCIA
+    if sheet is None:
+        conectar_google()
+
+    if sheet is None:
+        await update.message.reply_text("❌ Error: No se pudo conectar a la hoja. Revisa los permisos.")
+        return ConversationHandler.END
 
     datos_finales = [
-        context.user_data['correo'],      # B
-        context.user_data['clave'],       # C
-        context.user_data['ip'],          # D
-        context.user_data['priv'],        # E
-        context.user_data['plataforma'],  # F
-        context.user_data['estado'],      # G
-        context.user_data['bin'],         # H
-        context.user_data['tarjeta'],     # I
-        fecha_venc                        # J
+        context.user_data['correo'], context.user_data['clave'],
+        context.user_data['ip'], context.user_data['priv'],
+        context.user_data['plataforma'], context.user_data['estado'],
+        context.user_data['bin'], context.user_data['tarjeta'],
+        fecha_venc
     ]
 
     try:
@@ -124,11 +125,7 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sheet.update(range_name=rango, values=[datos_finales])
 
         await update.message.reply_text(
-            f"✅ **REGISTRO EXITOSO** 💜\n\n"
-            f"👤 `User:` {context.user_data['correo']}\n"
-            f"💳 `BIN:` {context.user_data['bin']}\n"
-            f"📅 `Venc:` {fecha_venc}\n\n"
-            "Todo guardado en la hoja MANGO.",
+            f"✅ **REGISTRO EXITOSO** 💜\n\nTodo guardado en la hoja MANGO.",
             parse_mode='Markdown',
             reply_markup=ReplyKeyboardRemove()
         )
@@ -146,8 +143,9 @@ if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN_TELEGRAM")
     
     if not TOKEN:
-        print("❌ Error: No existe TOKEN_TELEGRAM en Render")
+        print("❌ Error: No existe TOKEN_TELEGRAM")
     else:
+        # PASO CRÍTICO: Conectamos antes de iniciar el Bot
         conectar_google()
         keep_alive()
         
@@ -156,7 +154,6 @@ if __name__ == '__main__':
         conv_handler = ConversationHandler(
             entry_points=[CommandHandler("nuevo", nuevo_registro)],
             states={
-                # Los filtros aceptan cualquier texto (incluyendo @ y números)
                 CORREO: [MessageHandler(filters.TEXT & ~filters.COMMAND, p_clave)],
                 CLAVE: [MessageHandler(filters.TEXT & ~filters.COMMAND, p_ip)],
                 IP: [MessageHandler(filters.TEXT & ~filters.COMMAND, p_priv)],
