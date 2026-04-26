@@ -6,12 +6,12 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from flask import Flask
 from threading import Thread
 
-# --- 1. DESPERTADOR PARA RENDER (FLASK) ---
+# --- 1. SERVIDOR WEB (KEEP ALIVE) ---
 app_web = Flask('')
 
 @app_web.route('/')
 def home():
-    return "🥭 Sistema MANGO - Proceso Activo"
+    return "🥭 Sistema MANGO - Activo"
 
 def run_web():
     port = int(os.environ.get('PORT', 8080))
@@ -29,129 +29,119 @@ def conectar_google():
     global sheet
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     try:
-        # El archivo DEBE llamarse credenciales.json en tu GitHub
+        # Busca el archivo credenciales.json en la carpeta raíz
         creds = ServiceAccountCredentials.from_json_keyfile_name('credenciales.json', scope)
         client = gspread.authorize(creds)
-        # Verificamos nombres exactos de Hoja y Pestaña
-        sheet = client.open("mango").worksheet("datos")
+        
+        # Diagnóstico: Imprime en consola los archivos que el bot SÍ puede ver
+        nombres_hojas = [s.title for s in client.openall()]
+        print(f"📂 Archivos detectados: {nombres_hojas}")
+        
+        # Intento de apertura
+        sheet = client.open("MANGO").worksheet("Sacadaas")
         print("✅ Conexión exitosa a Google Sheets")
     except Exception as e:
         print(f"❌ Error de conexión: {e}")
-        sheet = None  # Aseguramos que sea None si falla
+        sheet = None
 
-# --- 3. DEFINICIÓN DE PASOS (9 PASOS TOTALES) ---
+# --- 3. ESTADOS ---
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
-# --- 4. LÓGICA DEL BOT ---
+# --- 4. FUNCIONES ---
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
     await update.message.reply_animation(
         animation=gif_url,
-        caption="¡Holaaa! Que bueno que te dignas a chambear, Valu** 🥭\n\nUsa `/nuevo` para iniciar el registro.",
+        caption="¡Holaaa! Que bueno que te dignas a chambear, Valu** 🥭\n\nUsa `/nuevo` para iniciar.",
         parse_mode='Markdown'
     )
 
 async def nuevo_registro(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📧 **Paso 1:** ¿Cuál es el **CORREO**?", parse_mode='Markdown')
+    await update.message.reply_text("📧 **Paso 1:** ¿Correo?", parse_mode='Markdown')
     return CORREO
 
 async def p_clave(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['correo'] = update.message.text
-    await update.message.reply_text("🔑 **Paso 2:** ¿Cuál es la **CONTRASEÑA**?\n*(Puedes usar números y @)*", parse_mode='Markdown')
+    await update.message.reply_text("🔑 **Paso 2:** ¿Contraseña? (@ y números ok)")
     return CLAVE
 
 async def p_ip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['clave'] = update.message.text
-    await update.message.reply_text("🌐 **Paso 3:** ¿Qué **IP** tiene?", parse_mode='Markdown')
+    await update.message.reply_text("🌐 **Paso 3:** ¿IP?")
     return IP
 
 async def p_priv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['ip'] = update.message.text
-    await update.message.reply_text("🛡️ **Paso 4:** ¿De qué **PRIV** salió?", parse_mode='Markdown')
+    await update.message.reply_text("🛡️ **Paso 4:** ¿PRIV?")
     return PRIV
 
 async def p_plataforma(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['priv'] = update.message.text
-    await update.message.reply_text("💻 **Paso 5:** ¿Qué **PLATAFORMA** es?", parse_mode='Markdown')
+    await update.message.reply_text("💻 **Paso 5:** ¿Plataforma?")
     return PLATAFORMA
 
 async def p_pestado(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['plataforma'] = update.message.text
-    await update.message.reply_text("📊 **Paso 6:** ¿En qué **ESTADO** se encuentra?", parse_mode='Markdown')
+    await update.message.reply_text("📊 **Paso 6:** ¿Estado?")
     return ESTADO
 
 async def p_bin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['estado'] = update.message.text
-    await update.message.reply_text("🔢 **Paso 7:** ¿Con qué **BIN** fue?", parse_mode='Markdown')
+    await update.message.reply_text("🔢 **Paso 7:** ¿BIN?")
     return BIN
 
 async def p_tarjeta(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['bin'] = update.message.text
-    await update.message.reply_text("💳 **Paso 8:** ¿Con qué **TARJETA** fue?", parse_mode='Markdown')
+    await update.message.reply_text("💳 **Paso 8:** ¿Tarjeta?")
     return TARJETA
 
 async def p_fecha_ven(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['tarjeta'] = update.message.text
-    await update.message.reply_text("📅 **Paso 9:** ¿Cuál es su **FECHA DE VENC**?\n*(Formato: 14/02/2007)*", parse_mode='Markdown')
+    await update.message.reply_text("📅 **Paso 9:** ¿Fecha vencimiento? (DD/MM/AAAA)")
     return FECHA_VEN
 
 async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global sheet
-    fecha_venc = update.message.text
+    if sheet is None: conectar_google()
     
-    # RE-CONEXIÓN DE EMERGENCIA
     if sheet is None:
-        conectar_google()
-
-    if sheet is None:
-        await update.message.reply_text("❌ Error: No se pudo conectar a la hoja. Revisa los permisos.")
+        await update.message.reply_text("❌ Sin acceso a Google. Revisa permisos.")
         return ConversationHandler.END
 
-    datos_finales = [
+    datos = [
         context.user_data['correo'], context.user_data['clave'],
         context.user_data['ip'], context.user_data['priv'],
         context.user_data['plataforma'], context.user_data['estado'],
         context.user_data['bin'], context.user_data['tarjeta'],
-        fecha_venc
+        update.message.text
     ]
 
     try:
-        col_b = sheet.col_values(2) 
-        siguiente_fila = len(col_b) + 1
-        if siguiente_fila < 4: siguiente_fila = 4 
-
-        rango = f"B{siguiente_fila}:J{siguiente_fila}"
-        sheet.update(range_name=rango, values=[datos_finales])
-
-        await update.message.reply_text(
-            f"✅ **REGISTRO EXITOSO** 💜\n\nTodo guardado en la hoja MANGO.",
-            parse_mode='Markdown',
-            reply_markup=ReplyKeyboardRemove()
-        )
+        col_b = sheet.col_values(2)
+        fila = max(len(col_b) + 1, 4)
+        sheet.update(range_name=f"B{fila}:J{fila}", values=[datos])
+        await update.message.reply_text("✅ **GUARDADO** 💜", parse_mode='Markdown')
     except Exception as e:
-        await update.message.reply_text(f"❌ Error al guardar: {e}")
-        
+        await update.message.reply_text(f"❌ Error: {e}")
+    
     return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❌ Registro cancelado. Borahae! 💜", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text("Cancelado. 💜", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-# --- 5. INICIO DEL PROGRAMA ---
+# --- 5. MAIN ---
 if __name__ == '__main__':
     TOKEN = os.getenv("TOKEN_TELEGRAM")
-    
     if not TOKEN:
-        print("❌ Error: No existe TOKEN_TELEGRAM")
+        print("❌ Sin TOKEN")
     else:
-        # PASO CRÍTICO: Conectamos antes de iniciar el Bot
         conectar_google()
         keep_alive()
-        
         app = ApplicationBuilder().token(TOKEN).build()
-
-        conv_handler = ConversationHandler(
+        
+        conv = ConversationHandler(
             entry_points=[CommandHandler("nuevo", nuevo_registro)],
             states={
                 CORREO: [MessageHandler(filters.TEXT & ~filters.COMMAND, p_clave)],
@@ -166,9 +156,7 @@ if __name__ == '__main__':
             },
             fallbacks=[CommandHandler("cancelar", cancel)],
         )
-
-        app.add_handler(CommandHandler("start", start_command))
-        app.add_handler(conv_handler)
         
-        print("✅ Sistema MANGO Funcionando...")
+        app.add_handler(CommandHandler("start", start_command))
+        app.add_handler(conv)
         app.run_polling()
