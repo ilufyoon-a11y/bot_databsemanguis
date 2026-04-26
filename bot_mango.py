@@ -48,22 +48,19 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
     if sheet is None: conectar_google()
     
     try:
-        # Chat ID de Valu (el bot te mandará el mensaje a ti)
-        # Puedes sacarlo usando /start y viendo los logs o fijarlo si ya lo sabes
-        # Por ahora, esta función se activará cada 24 horas
         registros = sheet.get_all_records()
         hoy = datetime.date.today()
         proximos = []
 
         for reg in registros:
+            # Importante: Que el nombre de la columna en tu Excel sea exactamente "FECHA DE VENC"
             fecha_str = str(reg.get('FECHA DE VENC', ''))
             try:
-                # Intentamos convertir la fecha (ajusta el formato si usas otro)
                 fecha_v = datetime.datetime.strptime(fecha_str, "%d/%m/%Y").date()
                 dias_restantes = (fecha_v - hoy).days
                 
-                if 0 <= dias_restantes <= 1: # Alerta si faltan 3 días o menos
-                    proximos.append(f"⚠️ {reg.get('PLATAFORMA')} ({reg.get('CORREO')}) vence en {dias_restantes} días.")
+                if 0 <= dias_restantes <= 1: 
+                    proximos.append(f"⚠️ {reg.get('PLATAFORMA')} ({reg.get('CORREO')}) vence en {dias_restantes} día(s).")
             except:
                 continue
 
@@ -77,75 +74,77 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Programar la alerta la primera vez que se usa (cada 24 horas)
+    # Activa la revisión diaria de vencimientos (Corre a las 10:00 AM)
     chat_id = update.effective_chat.id
     jobs = context.job_queue.get_jobs_by_name(f"alerta_{chat_id}")
     if not jobs:
         context.job_queue.run_daily(revisar_vencimientos, time=datetime.time(hour=10, minute=0), chat_id=chat_id, name=f"alerta_{chat_id}")
 
+    # --- TU MENSAJE RESTAURADO ---
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
-    await update.message.reply_animation(animation=gif_url, caption="¡Hola Valu! 🥭\nUsa `/nuevo` para registrar.")
+    await update.message.reply_animation(
+        animation=gif_url, 
+        caption="¡Holaaa! Que bueno que te dignas a chambear, Valu** 🥭\n\nUsa `/nuevo` para iniciar el registro.",
+        parse_mode='Markdown'
+    )
 
 async def nuevo_registro(u, c):
-    await u.message.reply_text("📧 **Paso 1:** ¿CORREO?")
+    await u.message.reply_text("📧 **Paso 1:** ¿Cuál es el **CORREO**?", parse_mode='Markdown')
     return CORREO
 
 async def p_clave(u, c):
     c.user_data['correo'] = u.message.text
-    await u.message.reply_text("🔑 **Paso 2:** ¿CLAVE?")
+    await u.message.reply_text("🔑 **Paso 2:** ¿Cuál es la **CONTRASEÑA**?", parse_mode='Markdown')
     return CLAVE
 
 async def p_ip(u, c):
     c.user_data['clave'] = u.message.text
-    await u.message.reply_text("🌐 **Paso 3:** ¿IP?")
+    await u.message.reply_text("🌐 **Paso 3:** ¿Qué **IP** tiene?", parse_mode='Markdown')
     return IP
 
 async def p_priv(u, c):
     c.user_data['ip'] = u.message.text
-    await u.message.reply_text("🛡️ **Paso 4:** ¿PRIV?")
+    await u.message.reply_text("🛡️ **Paso 4:** ¿De qué **PRIV** salió?", parse_mode='Markdown')
     return PRIV
 
 async def p_plataforma(u, c):
     c.user_data['priv'] = u.message.text
-    await u.message.reply_text("💻 **Paso 5:** ¿PLATAFORMA?")
+    await u.message.reply_text("💻 **Paso 5:** ¿Qué **PLATAFORMA** es?", parse_mode='Markdown')
     return PLATAFORMA
 
 async def p_pestado(u, c):
     c.user_data['plataforma'] = u.message.text
-    await u.message.reply_text("📊 **Paso 6:** ¿ESTADO?")
+    await u.message.reply_text("📊 **Paso 6:** ¿En qué **ESTADO** se encuentra?", parse_mode='Markdown')
     return ESTADO
 
 async def p_bin(u, c):
     c.user_data['estado'] = u.message.text
-    await u.message.reply_text("🔢 **Paso 7:** ¿BIN?")
+    await u.message.reply_text("🔢 **Paso 7:** ¿Con qué **BIN** fue?", parse_mode='Markdown')
     return BIN
 
 async def p_tarjeta(u, c):
     c.user_data['bin'] = u.message.text
-    await u.message.reply_text("💳 **Paso 8:** ¿TARJETA?")
+    await u.message.reply_text("💳 **Paso 8:** ¿Con qué **TARJETA** fue?", parse_mode='Markdown')
     return TARJETA
 
 async def p_fecha_ven(u, c):
     c.user_data['tarjeta'] = u.message.text
-    await u.message.reply_text("📅 **Paso 9:** ¿VENCIMIENTO? (DD/MM/AAAA)")
+    await u.message.reply_text("📅 **Paso 9:** ¿Cuál es su **FECHA DE VENC**?\n*(Ejemplo: 14/02/2007)*", parse_mode='Markdown')
     return FECHA_VEN
 
 async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global sheet
     if sheet is None: conectar_google()
     
-    # --- CORRECCIÓN DE POSICIÓN ---
     try:
-        col_b = sheet.col_values(2) # Columna de correos
-        # Buscamos la primera fila realmente vacía después de la 11
+        col_b = sheet.col_values(2) 
         siguiente_fila = 11
         for i, valor in enumerate(col_b):
-            if i >= 10 and not valor.strip(): # Si a partir de la 11 está vacío
+            if i >= 10 and not valor.strip(): 
                 siguiente_fila = i + 1
                 break
             siguiente_fila = len(col_b) + 1
         
-        # Si la tabla está muy vacía, forzamos la 11
         if siguiente_fila < 11: siguiente_fila = 11
 
         datos = [
@@ -157,9 +156,9 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         sheet.update(range_name=f"B{siguiente_fila}:J{siguiente_fila}", values=[datos])
-        await update.message.reply_text("✅ **¡DENTRO DE LA TABLA!** 🥭💜")
+        await update.message.reply_text("✅ **¡REGISTRO EXITOSO EN TU TABLA!** 🥭💜", reply_markup=ReplyKeyboardRemove())
     except Exception as e:
-        await update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error al guardar: {e}")
     return ConversationHandler.END
 
 # --- 5. INICIO ---
@@ -187,4 +186,6 @@ if __name__ == '__main__':
         )
         app.add_handler(CommandHandler("start", start_command))
         app.add_handler(conv_handler)
+        
+        print("✅ Sistema MANGO Funcionando...")
         app.run_polling()
