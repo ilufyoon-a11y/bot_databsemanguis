@@ -138,14 +138,14 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     try:
         col_b = sheet.col_values(2) 
-        siguiente_fila = 11
+        siguiente_fila = 4
         for i, valor in enumerate(col_b):
             if i >= 10 and not valor.strip(): 
                 siguiente_fila = i + 1
                 break
             siguiente_fila = len(col_b) + 1
         
-        if siguiente_fila < 11: siguiente_fila = 11
+        if siguiente_fila < 4: siguiente_fila = 4
 
         datos = [
             context.user_data['correo'], context.user_data['clave'],
