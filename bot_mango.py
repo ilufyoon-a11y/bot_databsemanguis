@@ -74,6 +74,8 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
 # --- 4. LÓGICA DEL BOT (PASOS) ---
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
+-------------------------------- TODO ESTO ES EL MENSAJE AL INICIAR EL BOT --------------------------------
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Programar alertas diarias a las 10:00 AM
     chat_id = update.effective_chat.id
