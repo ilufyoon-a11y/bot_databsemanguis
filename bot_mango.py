@@ -74,14 +74,14 @@ async def revisar_vencimientos(context: ContextTypes.DEFAULT_TYPE):
 # --- 4. LÓGICA DEL BOT (PASOS) ---
 CORREO, CLAVE, IP, PRIV, PLATAFORMA, ESTADO, BIN, TARJETA, FECHA_VEN = range(9)
 
--------------------------------- TODO ESTO ES EL MENSAJE AL INICIAR EL BOT --------------------------------
-
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Programar alertas diarias a las 10:00 AM
     chat_id = update.effective_chat.id
     jobs = context.job_queue.get_jobs_by_name(f"alerta_{chat_id}")
     if not jobs:
         context.job_queue.run_daily(revisar_vencimientos, time=datetime.time(hour=10, minute=0), chat_id=chat_id, name=f"alerta_{chat_id}")
+
+# -------------------------------- TODO ESTO ES EL MENSAJE AL INICIAR EL BOT --------------------------------
 
     # Tu mensaje de bienvenida personalizado
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
@@ -90,6 +90,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         caption="¡Holaaa! Que bueno que te dignas a chambear, Valu** 🥭\n\nUsa `/nuevo` para iniciar el registro.",
         parse_mode='Markdown'
     )
+
+# -------------------------------- TODO ESTO ES EL MENSAJE AL INICIAR EL BOT --------------------------------
 
 async def nuevo_registro(u, c):
     await u.message.reply_text("📧 **Paso 1:** ¿Cuál es el **CORREO**?", parse_mode='Markdown')
