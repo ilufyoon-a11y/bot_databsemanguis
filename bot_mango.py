@@ -31,14 +31,14 @@ def trigger_alertas():
                 dias_restantes = (fecha_v - hoy).days
                 if 0 <= dias_restantes <= 1:
                     proximos.append(
-                        f"⚠️ *{reg.get('PLATAFORMA', 'N/A')}* ({reg.get('CORREO', 'N/A')}) "
-                        f"vence en *{dias_restantes}* día(s)."
+                        f"⚠️ {reg.get('PLATAFORMA', 'N/A')} ({reg.get('CORREO', 'N/A')}) "
+                        f"vence en {dias_restantes} diɑ(s)."
                     )
             except ValueError:
                 continue
 
         if proximos:
-            mensaje = "📢 *ALERTAS MANGO* 🥭\n\n" + "\n".join(proximos)
+            mensaje = "𝗢𝗝𝗢 𝗩𝗔𝗟𝗨\n\n" + "\n".join(proximos)
             TOKEN = os.getenv("TOKEN_TELEGRAM")
             CHAT_ID = os.getenv("CHAT_ID")
             async def enviar():
@@ -46,9 +46,9 @@ def trigger_alertas():
                 bot = Bot(token=TOKEN)
                 await bot.send_message(chat_id=CHAT_ID, text=mensaje, parse_mode='Markdown')
             asyncio.run(enviar())
-            return "✅ Alertas enviadas"
+            return "✅ 𝖠𝗅𝖾𝗋𝗍𝖺𝗌 𝖿𝗎𝗇𝖼𝗂𝗈𝗇𝖺𝗇𝖽𝗈"
         else:
-            return "✅ Sin vencimientos próximos"
+            return "🕰️ 𝖲𝗂𝗇 𝗏𝖾𝗇𝖼𝗂𝗆𝗂𝖾𝗇𝗍𝗈𝗌 𝗉𝗋𝗈𝗑𝗂𝗆𝗈𝗌"
 
     except Exception as e:
         return f"🚨 Error: {e}"
@@ -91,61 +91,61 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gif_url = "https://i.pinimg.com/originals/f9/a6/4c/f9a64c366580433ae19d021cca11a205.gif"
     await update.message.reply_animation(
         animation=gif_url,
-        caption="¡Holaaa! Que bueno que te dignas a chambear, Valu** 🥭\n\nUsa `/nuevo` para iniciar el registro.\nUsa `/cancelar` si quieres abortar en cualquier momento.",
+        caption="¡Holaaa! Que bueno que te dignas a chambear, Valu \n\nUsa /nuevo para iniciar el registro.\nUsa /cancelar si quieres abortar en cualquier momento.",
         parse_mode='Markdown'
     )
 
 async def nuevo_registro(u, c):
-    await u.message.reply_text("📧 *Paso 1:* ¿Cuál es el *CORREO*?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖢𝗈𝗋𝗋𝖾𝗈   ֹ    ۪   💌", parse_mode='Markdown')
     return CORREO
 
 async def cancelar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
     await update.message.reply_text(
-        "❌ Registro cancelado. Ningún dato fue guardado.\n\nUsa /nuevo cuando quieras empezar de nuevo. 🥭",
+        "𝗥𝗘𝗚𝗜𝗦𝗧𝗥𝗢 𝗖𝗔𝗡𝗖𝗘𝗟𝗔𝗗𝗢. 𝖭𝗂𝗇𝗀𝗎𝗇 𝖽𝖺𝗍𝗈 𝖿𝗎𝖾 𝗀𝗎𝖺𝗋𝖽𝖺𝖽𝗈.",
         reply_markup=ReplyKeyboardRemove()
     )
     return ConversationHandler.END
 
 async def p_clave(u, c):
     c.user_data['correo'] = u.message.text
-    await u.message.reply_text("🔑 *Paso 2:* ¿Cuál es la *CONTRASEÑA*?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖯𝖺𝗌𝗌𝗐𝗈𝗋𝖽   ֹ    ۪   🗝️", parse_mode='Markdown')
     return CLAVE
 
 async def p_ip(u, c):
     c.user_data['clave'] = u.message.text
-    await u.message.reply_text("🌐 *Paso 3:* ¿Qué *IP* tiene?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖨𝖯   ֹ    ۪   🗺️", parse_mode='Markdown')
     return IP
 
 async def p_priv(u, c):
     c.user_data['ip'] = u.message.text
-    await u.message.reply_text("🛡️ *Paso 4:* ¿De qué *PRIV* salió?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖯𝗋𝗂𝗏   ֹ    ۪   🗃️", parse_mode='Markdown')
     return PRIV
 
 async def p_plataforma(u, c):
     c.user_data['priv'] = u.message.text
-    await u.message.reply_text("💻 *Paso 5:* ¿Qué *PLATAFORMA* es?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖯𝗅𝖺𝗍𝖺𝖿𝗈𝗋𝗆𝖺   ֹ    ۪   💻", parse_mode='Markdown')
     return PLATAFORMA
 
 async def p_pestado(u, c):
     c.user_data['plataforma'] = u.message.text
-    await u.message.reply_text("📊 *Paso 6:* ¿En qué *ESTADO* se encuentra?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖤𝗌𝗍𝖺𝖽𝗈   ֹ    ۪   🪁", parse_mode='Markdown')
     return ESTADO
 
 async def p_bin(u, c):
     c.user_data['estado'] = u.message.text
-    await u.message.reply_text("🔢 *Paso 7:* ¿Con qué *BIN* fue?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖡𝖨𝖭   ֹ    ۪   🔢", parse_mode='Markdown')
     return BIN
 
 async def p_tarjeta(u, c):
     c.user_data['bin'] = u.message.text
-    await u.message.reply_text("💳 *Paso 8:* ¿Con qué *TARJETA* fue?", parse_mode='Markdown')
+    await u.message.reply_text("⭒    ۪   𝖳𝖺𝗋𝗃𝖾𝗍𝖺   ֹ    ۪   💳", parse_mode='Markdown')
     return TARJETA
 
 async def p_fecha_ven(u, c):
     c.user_data['tarjeta'] = u.message.text
     await u.message.reply_text(
-        "📅 *Paso 9:* ¿Cuál es su *FECHA DE VENC*?\n*(Usa formato DD/MM/AAAA)*",
+        "⭒    ۪   𝖵𝖾𝗇𝖼𝗂𝗆𝗂𝖾𝗇𝗍𝗈   ֹ    ۪   ⏰",
         parse_mode='Markdown'
     )
     return FECHA_VEN
@@ -185,7 +185,7 @@ async def finalizar(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.clear()
 
         await update.message.reply_text(
-            f"✅ *¡REGISTRO EXITOSO!* 🥭💜\nGuardado en la fila: `{siguiente_fila}`",
+            f"𝗥𝗘𝗚𝗜𝗦𝗧𝗥𝗢 𝗘𝗫𝗜𝗧𝗢𝗦𝗢\n𝖦𝗎𝖺𝗋𝖽𝖺𝖽𝗈 𝖾𝗇 𝗅𝖺 𝖿𝗂𝗅𝖺: {siguiente_fila}",
             reply_markup=ReplyKeyboardRemove(),
             parse_mode='Markdown'
         )
